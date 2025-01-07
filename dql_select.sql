@@ -24,8 +24,8 @@ SELECT * FROM usuarios WHERE direccion IS NULL OR direccion = '';
 -- 8. Obtener usuarios con apellidos que contengan la letra "a"
 SELECT * FROM usuarios WHERE apellido LIKE '%a%';
 
--- 9. Usuarios registrados antes de 2020
-SELECT * FROM usuarios WHERE fecha_registro < '2020-01-01';
+-- 9. Usuarios registrados antes de 2025
+SELECT * FROM usuarios WHERE fecha_registro < '2025-01-01';
 
 -- 10. Obtener los 5 primeros usuarios registrados
 SELECT * FROM usuarios ORDER BY fecha_registro ASC LIMIT 5;
@@ -199,8 +199,8 @@ FROM servicios s
 JOIN contrataciones c ON s.id_servicio = c.id_servicio 
 JOIN bonificaciones b ON c.id_usuario = b.id_usuario;
 
--- 59. Usuarios con categoría "LEAL" registrados después de 2020
-SELECT * FROM usuarios WHERE categoria_usuario = 'LEAL' AND fecha_registro > '2020-01-01';
+-- 59. Usuarios con categoría "LEAL" registrados después del 2024
+SELECT * FROM usuarios WHERE categoria_usuario = 'LEAL' AND fecha_registro > '2024-01-01';
 
 -- 60. Contar cuántos usuarios tienen dirección especificada
 SELECT COUNT(*) AS usuarios_con_direccion FROM usuarios WHERE direccion IS NOT NULL AND direccion <> '';
@@ -323,8 +323,8 @@ SELECT * FROM reportes ORDER BY CHAR_LENGTH(nombre_reporte) DESC LIMIT 1;
 -- 93. Buscar reportes con descripción que contenga "Problema"
 SELECT * FROM reportes WHERE descripcion LIKE '%Problema%';
 
--- 94. Reportes creados en los últimos 90 días
-SELECT * FROM reportes WHERE fecha_creacion >= CURDATE() - INTERVAL 90 DAY;
+-- 94. Reportes creados en los últimos 30 días
+SELECT * FROM reportes WHERE fecha_creacion >= CURDATE() - INTERVAL 30 DAY;
 
 -- 95. Contar reportes por cada año de creación
 SELECT YEAR(fecha_creacion) AS anio, COUNT(*) AS cantidad FROM reportes GROUP BY anio;

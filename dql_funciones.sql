@@ -3,8 +3,10 @@ use movistar;
 -- 1. Determinar la categoría de un usuario
 
 DELIMITER //
+
 CREATE FUNCTION obtener_categoria_usuario (p_id_usuario INT)
 RETURNS ENUM('NUEVO', 'REGULAR', 'LEAL')
+DETERMINISTIC
 BEGIN
     DECLARE categoria ENUM('NUEVO', 'REGULAR', 'LEAL');
     
@@ -14,6 +16,7 @@ BEGIN
     
     RETURN categoria;
 END //
+
 DELIMITER ;
 
 -- SELECT obtener_categoria_usuario(1);
@@ -23,6 +26,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION ingresos_totales_por_tipo (p_tipo_servicio ENUM('POSPAGO', 'PREPAGO', 'FIBRA'))
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
     DECLARE total_ingresos DECIMAL(10,2);
     
@@ -42,6 +46,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_servicios_contratados (p_id_usuario INT)
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_servicios INT;
     
@@ -60,6 +65,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION total_bonificaciones_usuario (p_id_usuario INT)
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
     DECLARE total_bonificaciones DECIMAL(10,2);
     
@@ -78,6 +84,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION tiempo_registro_usuario (p_id_usuario INT)
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE dias_registro INT;
     
@@ -96,6 +103,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION precio_total_servicios_usuario (p_id_usuario INT)
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
     DECLARE total_precio DECIMAL(10,2);
     
@@ -115,6 +123,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION porcentaje_bonificacion_usuario (p_id_usuario INT)
 RETURNS DECIMAL(5,2)
+DETERMINISTIC
 BEGIN
     DECLARE total_bonificacion DECIMAL(10,2);
     DECLARE total_precio DECIMAL(10,2);
@@ -146,6 +155,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_usuarios_leales ()
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_leales INT;
     
@@ -164,6 +174,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_servicios_por_tipo (p_tipo_servicio ENUM('POSPAGO', 'PREPAGO', 'FIBRA'))
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_servicios INT;
     
@@ -183,6 +194,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_servicios_cancelados_usuario (p_id_usuario INT)
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_cancelados INT;
     
@@ -201,6 +213,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION ingresos_totales_usuario (p_id_usuario INT)
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
     DECLARE total_ingresos DECIMAL(10,2);
     
@@ -220,6 +233,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_servicios_activos ()
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_servicios_activos INT;
     
@@ -238,6 +252,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION promedio_precio_servicios ()
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
     DECLARE promedio DECIMAL(10,2);
     
@@ -257,6 +272,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_usuarios_con_multiple_servicio ()
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_usuarios INT;
     
@@ -276,6 +292,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION ingresos_por_servicio (p_id_servicio INT)
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
     DECLARE total_ingresos DECIMAL(10,2);
     
@@ -295,6 +312,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION edad_promedio_usuarios ()
 RETURNS DECIMAL(5,2)
+DETERMINISTIC
 BEGIN
     DECLARE edad_promedio DECIMAL(5,2);
     
@@ -312,6 +330,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_usuarios_con_cancelaciones ()
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_cancelaciones INT;
     
@@ -330,6 +349,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION total_bonificaciones_activas ()
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
 BEGIN
     DECLARE total_bonificaciones DECIMAL(10,2);
     
@@ -348,6 +368,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_usuarios_con_multiple_bonificacion ()
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_usuarios INT;
     
@@ -367,6 +388,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION contar_servicios_prepago ()
 RETURNS INT
+DETERMINISTIC
 BEGIN
     DECLARE total_servicios INT;
     
@@ -380,3 +402,13 @@ END //
 DELIMITER ;
 
 -- SELECT contar_servicios_prepago();
+
+CREATE VIEW vista_reportes AS
+SELECT *
+FROM reportes
+WHERE EXISTS (
+    SELECT 1
+    FROM usuarios
+    WHERE usuarios.id_rol = 3 -- Encargado de Reportes
+    AND usuarios.id_usuario = CURRENT_USER()
+);
