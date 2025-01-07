@@ -16,8 +16,8 @@ create table usuarios (
 create table servicios (
 	id_servicio int primary key auto_increment,
     nombre_servicio varchar(100) not null,
-    descripcion varchar(200) not null,
-    precio varchar(10) not null,
+    descripcion text not null,
+    precio decimal(10,2) not null,
     tipo enum('POSPAGO', 'PREPAGO', 'FIBRA') not null
 );
 
@@ -25,17 +25,17 @@ create table bonificaciones (
 	id_bonificacion int primary key auto_increment,
     id_usuario int,
     tipo_bonificacion enum('DESCUENTO', 'SERVICIO GRATUITO') not null,
-    monto varchar(100),
+    monto decimal(10,2),
     fecha_asignacion date not null,
     foreign key (id_usuario) references usuarios(id_usuario)
 );
 
 create table reportes (
-	id_reportes int primary key auto_increment,
+	id_reporte int primary key auto_increment,
     nombre_reporte varchar(100) not null,
-    descripcion varchar(100) not null,
+    descripcion text not null,
     fecha_creacion date,
-    tipo_reporte varchar(100)
+    tipo_reporte text not null
 );
 
 create table contrataciones (
