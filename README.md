@@ -59,27 +59,223 @@ La base de datos está organizada en las siguientes tablas clave:
 
 ## Ejemplos de Consultas
 
+**Estado actual de algunos procedimientos**
+
+```sql
+
+--  Registrar nuevo usuario
+
+DELIMITER //
+CREATE PROCEDURE registrar_usuario (
+    IN p_id_usuario INT, 
+    IN p_nombre VARCHAR(100), 
+    IN p_apellido VARCHAR(100), 
+    IN p_direccion VARCHAR(200), 
+    IN p_telefono VARCHAR(30), 
+    IN p_email VARCHAR(100), 
+    IN p_fecha_registro DATE, 
+    IN p_categoria_usuario ENUM('NUEVO', 'REGULAR', 'LEAL')
+)
+BEGIN
+    INSERT INTO usuarios (id_usuario, nombre, apellido, direccion, telefono, email, fecha_registro, categoria_usuario)
+    VALUES (p_id_usuario, p_nombre, p_apellido, p_direccion, p_telefono, p_email, p_fecha_registro, p_categoria_usuario);
+END //
+DELIMITER ;
+
+-- Actualizar algun servicio existente
+
+DELIMITER //
+CREATE PROCEDURE actualizar_servicio (
+    IN p_id_servicio INT, 
+    IN p_nombre_servicio VARCHAR(100), 
+    IN p_descripcion TEXT, 
+    IN p_precio DECIMAL(10,2), 
+    IN p_tipo ENUM('POSPAGO', 'PREPAGO', 'FIBRA')
+)
+BEGIN
+    UPDATE servicios 
+    SET nombre_servicio = p_nombre_servicio, descripcion = p_descripcion, 
+        precio = p_precio, tipo = p_tipo
+    WHERE id_servicio = p_id_servicio;
+END //
+DELIMITER ;
+
+--  Clasificar automaticamente a los usuarios leales
+
+DELIMITER //
+CREATE PROCEDURE clasificar_usuario_leal()
+BEGIN
+    UPDATE usuarios
+    SET categoria_usuario = 'LEAL'
+    WHERE DATEDIFF(CURDATE(), fecha_registro) > 365 AND categoria_usuario != 'LEAL';
+END //
+DELIMITER ;
+
+-- Ver los usuarios clasificados como leales
+
+DELIMITER //
+CREATE PROCEDURE obtener_usuarios_leales()
+BEGIN
+    SELECT id_usuario, nombre, apellido, fecha_registro 
+    FROM usuarios 
+    WHERE categoria_usuario = 'LEAL';
+END //
+DELIMITER ;
+
+```
+
+**Estado actual de algunas funciones**
+
+```sql
+
+ -- Calcular el total de bonificaciones asignadas a un usuario
+
+DELIMITER //
+CREATE FUNCTION total_bonificaciones_usuario (p_id_usuario INT)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    DECLARE total_bonificaciones DECIMAL(10,2);
+    
+    SELECT SUM(b.monto) INTO total_bonificaciones
+    FROM bonificaciones b
+    WHERE b.id_usuario = p_id_usuario AND b.fecha_asignacion <= CURDATE();
+    
+    RETURN total_bonificaciones;
+END //
+DELIMITER ;
+
+-- Calcular el precio total de los servicios contratados por un usuario
+
+DELIMITER //
+CREATE FUNCTION precio_total_servicios_usuario (p_id_usuario INT)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    DECLARE total_precio DECIMAL(10,2);
+    
+    SELECT SUM(s.precio) INTO total_precio
+    FROM servicios s
+    JOIN contrataciones c ON s.id_servicio = c.id_servicio
+    WHERE c.id_usuario = p_id_usuario AND c.estado = 'ACTIVO';
+    
+    RETURN total_precio;
+END //
+DELIMITER ;
+
+-- Calcular el número total de usuarios leales
+
+DELIMITER //
+CREATE FUNCTION contar_usuarios_leales ()
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE total_leales INT;
+    
+    SELECT COUNT(*) INTO total_leales
+    FROM usuarios
+    WHERE categoria_usuario = 'LEAL';
+    
+    RETURN total_leales;
+END //
+DELIMITER ;
+
+-- Calcular la cantidad de servicios contratados por tipo
+
+DELIMITER //
+CREATE FUNCTION contar_servicios_por_tipo (p_tipo_servicio ENUM('POSPAGO', 'PREPAGO', 'FIBRA'))
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE total_servicios INT;
+    
+    SELECT COUNT(*) INTO total_servicios
+    FROM servicios s
+    JOIN contrataciones c ON s.id_servicio = c.id_servicio
+    WHERE s.tipo = p_tipo_servicio AND c.estado = 'ACTIVO';
+    
+    RETURN total_servicios;
+END //
+DELIMITER ;
+
+```
+
+**Estado actual de algunos eventos**
+
+```sql
+-- Generación semanal de reportes
+
+CREATE EVENT generate_weekly_report
+ON SCHEDULE EVERY 1 WEEK
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    INSERT INTO reportes (nombre_reporte, fecha_reporte)
+    VALUES ('Reporte Semanal', NOW());
+END //
+
+-- Resumen mensual de ingresos por servicios
+
+CREATE EVENT monthly_service_revenue_summary
+ON SCHEDULE EVERY 1 MONTH
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    INSERT INTO resumen_ingresos (mes, ingresos_totales)
+    SELECT MONTH(CURDATE()), SUM(precio) 
+    FROM contrataciones c
+    JOIN servicios s ON c.id_servicio = s.id_servicio
+    WHERE MONTH(c.fecha_contratacion) = MONTH(CURDATE())
+    GROUP BY MONTH(CURDATE());
+END //
+
+-- Vencimiento de promociones
+
+CREATE EVENT expire_promotions
+ON SCHEDULE EVERY 1 DAY
+DO
+BEGIN
+    DELETE FROM promociones WHERE fecha_vencimiento < CURDATE();
+END //
+
+--  Generación de reportes de cancelaciones
+
+CREATE EVENT generate_cancellation_report
+ON SCHEDULE EVERY 1 MONTH
+DO
+BEGIN
+    INSERT INTO reportes_cancelaciones (fecha, total_cancelaciones)
+    SELECT CURDATE(), COUNT(*) FROM contrataciones WHERE estado = 'CANCELADO' AND MONTH(fecha_contratacion) = MONTH(CURDATE());
+END //
+
+```
+
 **Estado actual de los permisos**
 
 ```sql
 -- Administrador
+
 INSERT INTO roles_permisos (id_rol, id_permiso) VALUES
 (1, 1); -- GESTION_TOTAL
 
 -- Asesor de Ventas
+
 INSERT INTO roles_permisos (id_rol, id_permiso) VALUES
 (2, 2), -- GESTION_SERVICIOS
 (2, 3); -- GESTION_BONIFICACIONES
 
 -- Encargado de Reportes
+
 INSERT INTO roles_permisos (id_rol, id_permiso) VALUES
 (3, 4); -- GESTION_REPORTES
 
 -- Gestor de Servicios
+
 INSERT INTO roles_permisos (id_rol, id_permiso) VALUES
 (4, 2); -- GESTION_SERVICIOS
 
 -- Encargado de Fidelización
+
 INSERT INTO roles_permisos (id_rol, id_permiso) VALUES
 (5, 3), -- GESTION_BONIFICACIONES
 (5, 5); -- GESTION_CLIENTES_LEALES
@@ -93,14 +289,6 @@ Además de las consultas anteriores, se han incluido las siguientes funcionalida
 - Funciones
 - Triggers
 - Roles de Usuario y Permisos
-
-## Roles de Usuario y Permisos
-
-**Administrador**: Puede realizar todas las acciones en el sistema.
-**Asesor de Ventas**: Accede a información básica y puede actualizar e insertar datos en las tablas venta, inventario, y cliente.
-**Encargado de Reportes**: Acceso a informes financieros y registros de detalles financieros.
-**Gestor de Servicios**: 
-**Encargado de Fidelización**: 
 
 ## Contacto
 
