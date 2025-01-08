@@ -118,3 +118,4 @@ sql
     ├── dql_procedimientos.sql      # Procedimientos almacenados
     ├── dql_select.sql              # Consultas selects
     ├── dql_triggers.sql            # Triggers
+    ├── drawSQL.png                 # Diagrama Entidad Relacion
